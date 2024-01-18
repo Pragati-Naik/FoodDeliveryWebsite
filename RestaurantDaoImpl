@@ -1,0 +1,168 @@
+package com.food.daoImpl;
+
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.ArrayList;
+import java.util.List;
+
+import com.food.dao.RestaurantDao;
+import com.food.model.Restaurant;
+import com.food.util.DBConnectionUtil;
+
+public class RestaurantDaoImpl implements RestaurantDao {
+
+	private static Connection connection = null;
+	private static PreparedStatement prepareStatement = null;
+	private static Statement statement = null;
+	private ResultSet resultSet;
+	
+	String insertQuery = "INSERT INTO restaurant (Name, Address, Phone, Rating, CuisineType, IsActive, DeliveryTime, UserId, ImagePath) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+	String selectQuery = "SELECT * FROM restaurant WHERE restaurantId = ?";
+	String selectAllquery = "SELECT * FROM restaurant";
+	String updateQuery = "UPDATE restaurant SET name = ?, address = ?, phone = ?, rating = ?, cuisineType = ?, isActive = ?, DeliveryTime = ?, userId = ?, imagePath = ? WHERE restaurantId = ?";
+	String deleteQuery = "DELETE FROM restaurant WHERE restaurantId = ?";
+	
+	public RestaurantDaoImpl() {		
+	}
+	
+	@Override
+	public void addRestaurant(Restaurant restaurant) {
+
+	    try {
+	    	connection = DBConnectionUtil.getConnection();
+	    	
+	        prepareStatement = connection.prepareStatement(insertQuery);
+
+	        prepareStatement.setString(1, restaurant.getName());
+	        prepareStatement.setString(2, restaurant.getAddress());
+//	        prepareStatement.setInt(3, restaurant.getPhone());
+	        prepareStatement.setFloat(4, restaurant.getRating());
+	        prepareStatement.setString(5, restaurant.getCuisineType());
+	        prepareStatement.setBoolean(6, restaurant.isActive());
+	        prepareStatement.setInt(7, restaurant.getEstimatedDeliveryTime());
+	        prepareStatement.setInt(8, restaurant.getUserId());
+	        prepareStatement.setString(9, restaurant.getImagePath());
+	        prepareStatement.executeUpdate();
+	    }
+	        catch (SQLException e) {
+	            e.printStackTrace(); // Handle exception appropriately
+	        }
+	    }
+
+	@Override
+	public Restaurant getRestaurantById(int restaurantId) {
+	    Restaurant restaurant = null;
+
+	    try {
+	    	connection = DBConnectionUtil.getConnection();
+	    	prepareStatement = connection.prepareStatement(selectQuery);
+	        prepareStatement.setInt(1, restaurantId);
+
+	        try (ResultSet resultSet = prepareStatement.executeQuery()) {
+	            if (resultSet.next()) {
+	                restaurant = new Restaurant();
+	                restaurant.setRestaurantId(resultSet.getInt("restaurantId"));
+	                restaurant.setName(resultSet.getString("name"));
+	                restaurant.setAddress(resultSet.getString("address"));
+//	                restaurant.setPhone(resultSet.getInt("phone"));
+	                restaurant.setRating(resultSet.getFloat("rating"));
+	                restaurant.setCuisineType(resultSet.getString("cuisineType"));
+	                restaurant.setActive(resultSet.getBoolean("isActive"));
+	                restaurant.setEstimatedDeliveryTime(resultSet.getInt("estimatedDeliveryTime"));
+	                restaurant.setUserId(resultSet.getInt("userId"));
+	                restaurant.setImagePath(resultSet.getString("imagePath"));
+	            }
+	        }
+	    } catch (SQLException e) {
+	        e.printStackTrace(); // Handle exception appropriately
+	    }
+
+	    return restaurant;
+	}
+
+	@Override
+	public List<Restaurant> getAllRestaurants() {
+		
+		  List<Restaurant> restaurantList = new ArrayList<>();
+	        
+	        try {
+	        	connection = DBConnectionUtil.getConnection();
+	        	
+	        	prepareStatement = connection.prepareStatement(selectAllquery);
+	        	ResultSet resultSet = prepareStatement.executeQuery();
+	        	
+	            while (resultSet.next()) {
+	                Restaurant restaurant = extractRestaurantFromResultSet(resultSet);
+	                restaurantList.add(restaurant);
+	            }
+	        } catch (SQLException e) {
+	            e.printStackTrace(); // Handle exception appropriately
+	        }
+	        return restaurantList;
+	    }
+		
+	private Restaurant extractRestaurantFromResultSet(ResultSet resultSet) {
+
+		Restaurant restaurant = new Restaurant();
+        try {
+        connection = DBConnectionUtil.getConnection();
+		restaurant.setRestaurantId(resultSet.getInt("restaurantId"));
+        restaurant.setName(resultSet.getString("name"));
+        restaurant.setAddress(resultSet.getString("address"));
+        restaurant.setRating(resultSet.getFloat("rating"));
+        restaurant.setCuisineType(resultSet.getString("cuisineType"));
+        restaurant.setActive(resultSet.getBoolean("isActive"));
+        restaurant.setEstimatedDeliveryTime(resultSet.getInt("DeliveryTime"));
+        restaurant.setUserId(resultSet.getInt("userId"));
+        restaurant.setImagePath(resultSet.getString("imagePath"));
+        
+		return restaurant;
+        
+	} catch (SQLException e) {
+        e.printStackTrace(); // Handle exception appropriately
+    }
+		return restaurant;
+	}
+
+	@Override
+	public void updateRestaurant(Restaurant restaurant) {
+
+	        try {
+	        	connection = DBConnectionUtil.getConnection();
+	        	
+	        	prepareStatement = connection.prepareStatement(updateQuery);
+	            prepareStatement.setString(1, restaurant.getName());
+	            prepareStatement.setString(2, restaurant.getAddress());
+//	            prepareStatement.setInt(3, restaurant.getPhone());
+	            prepareStatement.setFloat(4, restaurant.getRating());
+	            prepareStatement.setString(5, restaurant.getCuisineType());
+	            prepareStatement.setBoolean(6, restaurant.isActive());
+	            prepareStatement.setInt(7, restaurant.getEstimatedDeliveryTime());
+	            prepareStatement.setInt(8, restaurant.getUserId());
+	            prepareStatement.setString(9, restaurant.getImagePath());
+	            prepareStatement.setInt(10, restaurant.getRestaurantId());
+
+	            prepareStatement.executeUpdate();
+	        } catch (SQLException e) {
+	            e.printStackTrace(); // Handle exception appropriately
+	        }
+	    }
+
+	@Override
+	public void deleteRestaurant(int restaurantId) {
+
+		try {
+			connection = DBConnectionUtil.getConnection();
+			
+        	prepareStatement = connection.prepareStatement(deleteQuery);
+            prepareStatement.setInt(1, restaurantId);
+            prepareStatement.executeUpdate();
+        } catch (SQLException e) {
+            e.printStackTrace(); // Handle exception appropriately
+        }
+	}
+}
